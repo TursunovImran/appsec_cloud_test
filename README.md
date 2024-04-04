@@ -8,6 +8,28 @@
 
 ## 2. Security code review
 
-# Часть 1. Go
+### Часть 1. Go
+- query := fmt.Sprintf("SELECT * FROM products WHERE name LIKE '%%%s%%'", searchQuery.
+Параметр принимаемый через get запрос, может содержать sql иньекцию, и может дайти до того, что все данные будут удалены.
+Исправление. Лучше всего, использовать параметры в запросе:
+query := fmt.Sprintf("SELECT * FROM %s WHERE name=$1", productsTable)
+row := r.db.QueryRow(query, searchQuery)
 
-# Часть 2. Python
+- db, err = sql.Open("mysql", "user:password@/dbname")
+Пароль хранится в открытом виде, если хакер получит доступ к логам, то может получит доступ и к самой бд.
+Исправление: Вынести пароль и имя дб в конфиг файл или в файл окружения .env
+
+### Часть 2. Python
+2.1)
+-output = Template('Hello ' + name + '! Your age is ' + age + '.').render() 
+Исправление. стоит использовать параметры и лучше всего экранировать их:
+output = Template('Hello {{ name }}! Your age is {{ age }}.').render(name=name, age=age)
+output = Template('Hello {{ name|escape }}! Your age is {{ age|escape }}.').render(name=name, age=age) - Предпочтительный способ, который гарантирует что html код будет преобразован в безопасный вид.
+
+2.2)
+= output = subprocess.check_output(cmd, shell=True, text=True)
+Юзер с помощью спец символ может провести командную инъекцию
+Исправление. Можно использовать параметр shell=False, в таком случае команда будет интерпретироваться системой,
+а т.к. система не обрабатывает спец. символы, то сложно будет провести командную инъекцию
+
+## 3. Моделирование угроз
